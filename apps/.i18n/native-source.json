@@ -38131,7 +38131,7 @@
     },
     {
       "kind": "ui-call",
-      "line": 487,
+      "line": 500,
       "path": "apps/shared/OpenClawKit/Sources/OpenClawChatUI/ChatView.swift",
       "source": "Retry Send",
       "surface": "apple",
@@ -38139,7 +38139,7 @@
     },
     {
       "kind": "ui-call",
-      "line": 501,
+      "line": 514,
       "path": "apps/shared/OpenClawKit/Sources/OpenClawChatUI/ChatView.swift",
       "source": "Delete",
       "surface": "apple",
@@ -38147,7 +38147,7 @@
     },
     {
       "kind": "ui-call",
-      "line": 535,
+      "line": 548,
       "path": "apps/shared/OpenClawKit/Sources/OpenClawChatUI/ChatView.swift",
       "source": "Stop Listening",
       "surface": "apple",
@@ -38155,7 +38155,7 @@
     },
     {
       "kind": "ui-call",
-      "line": 538,
+      "line": 551,
       "path": "apps/shared/OpenClawKit/Sources/OpenClawChatUI/ChatView.swift",
       "source": "Listen",
       "surface": "apple",
@@ -38163,7 +38163,7 @@
     },
     {
       "kind": "ui-modifier",
-      "line": 629,
+      "line": 646,
       "path": "apps/shared/OpenClawKit/Sources/OpenClawChatUI/ChatView.swift",
       "source": "Jump to latest reply",
       "surface": "apple",
@@ -38171,7 +38171,7 @@
     },
     {
       "kind": "ui-named-argument",
-      "line": 649,
+      "line": 666,
       "path": "apps/shared/OpenClawKit/Sources/OpenClawChatUI/ChatView.swift",
       "source": "Refresh",
       "surface": "apple",
@@ -38179,7 +38179,7 @@
     },
     {
       "kind": "ui-call",
-      "line": 1036,
+      "line": 1053,
       "path": "apps/shared/OpenClawKit/Sources/OpenClawChatUI/ChatView.swift",
       "source": "Copy Message",
       "surface": "apple",
@@ -38187,7 +38187,7 @@
     },
     {
       "kind": "ui-call",
-      "line": 1059,
+      "line": 1076,
       "path": "apps/shared/OpenClawKit/Sources/OpenClawChatUI/ChatView.swift",
       "source": "Open Full Message",
       "surface": "apple",
@@ -38195,7 +38195,7 @@
     },
     {
       "kind": "ui-localized-call",
-      "line": 1080,
+      "line": 1097,
       "path": "apps/shared/OpenClawKit/Sources/OpenClawChatUI/ChatView.swift",
       "source": "Reply",
       "surface": "apple",
@@ -38203,7 +38203,7 @@
     },
     {
       "kind": "ui-localized-call",
-      "line": 1090,
+      "line": 1107,
       "path": "apps/shared/OpenClawKit/Sources/OpenClawChatUI/ChatView.swift",
       "source": "You",
       "surface": "apple",
@@ -38211,7 +38211,7 @@
     },
     {
       "kind": "ui-localized-call",
-      "line": 1092,
+      "line": 1109,
       "path": "apps/shared/OpenClawKit/Sources/OpenClawChatUI/ChatView.swift",
       "source": "Assistant",
       "surface": "apple",
@@ -38219,7 +38219,7 @@
     },
     {
       "kind": "ui-call",
-      "line": 1158,
+      "line": 1175,
       "path": "apps/shared/OpenClawKit/Sources/OpenClawChatUI/ChatView.swift",
       "source": "Loading chat",
       "surface": "apple",
@@ -38227,7 +38227,7 @@
     },
     {
       "kind": "ui-modifier",
-      "line": 1238,
+      "line": 1255,
       "path": "apps/shared/OpenClawKit/Sources/OpenClawChatUI/ChatView.swift",
       "source": "Dismiss",
       "surface": "apple",
