@@ -1,12 +1,7 @@
 /* @vitest-environment jsdom */
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  buildWidgetThemeMessage,
-  collectWidgetThemeTokens,
-  installWidgetThemeObserver,
-  postWidgetTheme,
-} from "./widget-theme.ts";
+import { installWidgetThemeObserver, postWidgetTheme } from "./widget-theme.ts";
 
 function stubComputedStyles(values: Record<string, string>) {
   vi.stubGlobal(
@@ -20,6 +15,10 @@ function stubComputedStyles(values: Record<string, string>) {
   );
 }
 
+function postedMessage(postMessage: ReturnType<typeof vi.fn>) {
+  return postMessage.mock.calls[0] as [unknown, string];
+}
+
 afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
@@ -28,35 +27,37 @@ afterEach(() => {
 });
 
 describe("widget theme bridge", () => {
-  it("maps host variables to widget tokens and drops empty values", () => {
-    const hostValues: Record<string, string> = {
-      "--bg": "  #101010  ",
-      "--card": "#202020",
+  it("posts host variables mapped to widget tokens, dropping empty values", () => {
+    document.documentElement.dataset.themeMode = "light";
+    stubComputedStyles({
+      "--bg": "  #faf9f7  ",
+      "--card": "#ffffff",
       "--text": "   ",
+      "--accent": "#bd4531",
       "--accent-foreground": "#fff",
       "--mono": " ui-monospace ",
-    };
-
-    expect(collectWidgetThemeTokens((hostVar) => hostValues[hostVar] ?? "")).toEqual({
-      surface: "#101010",
-      card: "#202020",
-      "accent-fg": "#fff",
-      "font-mono": "ui-monospace",
     });
-  });
+    const postMessage = vi.fn();
+    const frame = { contentWindow: { postMessage } } as unknown as HTMLIFrameElement;
 
-  it("builds the current theme message", () => {
-    document.documentElement.dataset.themeMode = "light";
-    stubComputedStyles({ "--bg": "#faf9f7", "--accent": "#bd4531" });
+    postWidgetTheme(frame);
 
-    expect(buildWidgetThemeMessage()).toEqual({
+    const [message, origin] = postedMessage(postMessage);
+    expect(origin).toBe("*");
+    expect(message).toEqual({
       type: "openclaw:widget-theme",
       mode: "light",
-      tokens: { surface: "#faf9f7", accent: "#bd4531" },
+      tokens: {
+        surface: "#faf9f7",
+        card: "#ffffff",
+        accent: "#bd4531",
+        "accent-fg": "#fff",
+        "font-mono": "ui-monospace",
+      },
     });
   });
 
-  it('posts the theme to the widget with target origin "*"', () => {
+  it("reports dark mode when the host theme mode is not light", () => {
     document.documentElement.dataset.themeMode = "dark";
     stubComputedStyles({ "--bg": "#0e1015" });
     const postMessage = vi.fn();
@@ -64,14 +65,12 @@ describe("widget theme bridge", () => {
 
     postWidgetTheme(frame);
 
-    expect(postMessage).toHaveBeenCalledWith(
-      {
-        type: "openclaw:widget-theme",
-        mode: "dark",
-        tokens: { surface: "#0e1015" },
-      },
-      "*",
-    );
+    const [message] = postedMessage(postMessage);
+    expect(message).toEqual({
+      type: "openclaw:widget-theme",
+      mode: "dark",
+      tokens: { surface: "#0e1015" },
+    });
   });
 
   it("posts theme changes to connected frames and installs once", () => {

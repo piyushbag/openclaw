@@ -40,9 +40,7 @@ const HOST_TOKEN_SOURCES: Record<WidgetThemeToken, string> = {
   "font-mono": "--mono",
 };
 
-export function collectWidgetThemeTokens(
-  read: (hostVar: string) => string,
-): Record<string, string> {
+function collectWidgetThemeTokens(read: (hostVar: string) => string): Record<string, string> {
   const tokens: Record<string, string> = {};
   for (const token of WIDGET_THEME_TOKENS) {
     const value = read(HOST_TOKEN_SOURCES[token]).trim();
@@ -53,7 +51,7 @@ export function collectWidgetThemeTokens(
   return tokens;
 }
 
-export function buildWidgetThemeMessage(): {
+function buildWidgetThemeMessage(): {
   type: "openclaw:widget-theme";
   mode: "light" | "dark";
   tokens: Record<string, string>;
