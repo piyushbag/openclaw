@@ -270,7 +270,8 @@ export function readPluginSdkSurfaceBudgets(env = process.env) {
       // +4: gateway-backed harness question runner, claim/cancel helpers, and caller type.
       // Harvest: internal question runtime exports -2.
       // +3: bounded raw transcript cursor request, result, and reader.
-      8160,
+      // +3: bounded visible transcript cursor request, result, and reader.
+      8163,
       env,
     ),
     publicFunctionExports: readPluginSdkSurfaceBudgetEnv(
@@ -311,7 +312,8 @@ export function readPluginSdkSurfaceBudgets(env = process.env) {
       // +3: gateway-backed harness question runner and claim/cancel helpers.
       // Harvest: internal question runtime callable -1.
       // +1: bounded raw transcript cursor reader.
-      4540,
+      // +1: bounded visible transcript cursor reader.
+      4541,
       env,
     ),
     publicDeprecatedExports: readPluginSdkSurfaceBudgetEnv(
