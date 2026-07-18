@@ -11,6 +11,76 @@ import { SHOW_WIDGET_REQUIRED_CLIENT_CAPS, ShowWidgetToolSchema } from "./tool-s
 
 export const WIDGET_CODE_MAX_CHARS = 262_144;
 export const WIDGET_MAX_PER_SCOPE = 32;
+export const WIDGET_THEME_TOKENS = [
+  "surface",
+  "card",
+  "elevated",
+  "text",
+  "text-strong",
+  "muted",
+  "border",
+  "border-strong",
+  "accent",
+  "accent-fg",
+  "ok",
+  "warn",
+  "danger",
+  "info",
+  "radius",
+  "font-body",
+  "font-mono",
+] as const;
+
+// Baked palettes mirror the host claw theme (ui/src/styles/base.css) so
+// fallback renders match Control UI renders, where the theme bridge pushes the
+// same host values. Contrast tradeoffs in these pairings are owned by the host
+// theme; do not diverge here.
+const WIDGET_BASE_STYLES = `:root{color-scheme:light dark;
+--surface:#faf9f7;--card:#ffffff;--elevated:#ffffff;
+--text:#403c35;--text-strong:#211e1a;--muted:#6e6960;
+--border:#e8e4dc;--border-strong:#d6d0c5;
+--accent:#bd4531;--accent-fg:#ffffff;
+--ok:#15803d;--warn:#b45309;--danger:#dc2626;--info:#2563eb;
+--radius:10px;
+--font-body:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+--font-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+--accent-subtle:color-mix(in srgb,var(--accent) 10%,transparent);
+--ok-subtle:color-mix(in srgb,var(--ok) 10%,transparent);
+--warn-subtle:color-mix(in srgb,var(--warn) 12%,transparent);
+--danger-subtle:color-mix(in srgb,var(--danger) 10%,transparent);
+--info-subtle:color-mix(in srgb,var(--info) 10%,transparent)}
+@media (prefers-color-scheme:dark){:root{
+--surface:#0e1015;--card:#161920;--elevated:#191c24;
+--text:#d4d4d8;--text-strong:#f4f4f5;--muted:#8b8b94;
+--border:#1e2028;--border-strong:#2e3040;
+--accent:#ff5c5c;--accent-fg:#fafafa;
+--ok:#22c55e;--warn:#f59e0b;--danger:#ef4444;--info:#3b82f6}}
+*{box-sizing:border-box}html,body{margin:0}
+body{font:14px/1.5 var(--font-body);color:var(--text)}
+h1,h2,h3{margin:0 0 8px;color:var(--text-strong);font-weight:600}
+h1{font-size:18px}h2{font-size:16px}h3{font-size:14px}
+p{margin:0 0 8px}
+a{color:var(--accent)}
+button{font:13px var(--font-body);color:var(--text);background:var(--card);border:1px solid var(--border-strong);border-radius:var(--radius);padding:6px 14px;cursor:pointer}
+button:hover{border-color:var(--muted)}
+button.primary{background:var(--accent);color:var(--accent-fg);border-color:transparent}
+input,select,textarea{font:13px var(--font-body);color:var(--text);background:var(--elevated);border:1px solid var(--border-strong);border-radius:var(--radius);padding:6px 10px}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{text-align:left;font-weight:500;color:var(--muted);font-size:12px;padding:4px 8px}
+td{padding:6px 8px;border-top:1px solid var(--border)}
+code,pre{font-family:var(--font-mono);font-size:12px;background:var(--card);border-radius:4px}
+code{padding:1px 5px}pre{padding:10px;overflow-x:auto}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
+.badge{display:inline-block;font-size:12px;padding:2px 10px;border-radius:999px;background:var(--accent-subtle);color:var(--accent)}
+.badge.ok{background:var(--ok-subtle);color:var(--ok)}
+.badge.warn{background:var(--warn-subtle);color:var(--warn)}
+.badge.danger{background:var(--danger-subtle);color:var(--danger)}
+.badge.info{background:var(--info-subtle);color:var(--info)}
+.metric{font-size:24px;font-weight:600;color:var(--text-strong)}
+.muted{color:var(--muted)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.svg-widget{display:grid;place-items:center}.svg-widget>svg{max-width:100%}`;
 
 type ShowWidgetToolOptions = {
   config?: OpenClawConfig;
@@ -59,8 +129,27 @@ function buildWidgetDocument(title: string, widgetCode: string): string {
     'window.parent.postMessage({type:"openclaw:widget-prompt-offer"},"*",[c.port2]);' +
     "window.sendPrompt=text=>{if(!act||act()!==true)return;" +
     'post({type:"openclaw:widget-prompt",prompt:String(text)});};})();</script>';
+  /*
+   * The host may push a new theme after every theme change. Each message is a
+   * full snapshot: omitted or invalid tokens are removed so a theme switch
+   * falls back to the baked palette instead of keeping stale inline values.
+   * Only the fixed widget token allowlist crosses the frame boundary, and the
+   * native style setters are captured before widget code can patch them.
+   */
+  const themeBridge =
+    "<script>(()=>{if(!window.parent||window.parent===window)return;" +
+    "const root=document.documentElement;const set=root.style.setProperty.bind(root.style);" +
+    "const rm=root.style.removeProperty.bind(root.style);" +
+    `const keys=${JSON.stringify(WIDGET_THEME_TOKENS)};` +
+    'addEventListener("message",event=>{if(event.source!==window.parent)return;' +
+    'const data=event.data;if(!data||data.type!=="openclaw:widget-theme"||' +
+    'typeof data.tokens!=="object"||data.tokens===null)return;' +
+    "for(const key of keys){const raw=data.tokens[key];" +
+    'const value=typeof raw==="string"?raw.trim():"";' +
+    'if(value&&value.length<=256)set("--"+key,value);else rm("--"+key);}' +
+    'if(data.mode==="light"||data.mode==="dark")set("color-scheme",data.mode);});})();</script>';
   return `<!doctype html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:;"><title>${escapeHtml(title)}</title><style>:root{color-scheme:light dark}*{box-sizing:border-box}html,body{margin:0}body{font:14px system-ui,sans-serif}.svg-widget{display:grid;place-items:center}.svg-widget>svg{max-width:100%}</style></head><body${bodyClass}>${promptBridge}${widgetCode}${sizeReporter}</body></html>`;
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:;"><title>${escapeHtml(title)}</title><style>${WIDGET_BASE_STYLES}</style></head><body${bodyClass}>${promptBridge}${themeBridge}${widgetCode}${sizeReporter}</body></html>`;
 }
 
 function resolveRetentionScope(options: ShowWidgetToolOptions): string {
@@ -76,7 +165,7 @@ export function createShowWidgetTool(options: ShowWidgetToolOptions = {}): AnyAg
     label: "Show Widget",
     name: "show_widget",
     description:
-      "Show an interactive, self-contained HTML or SVG widget to the user on their current surface. Inline all required code and data. In web chat, a global sendPrompt(text) function submits text to the chat as if the user typed it — wire it to buttons or controls to build interactive widgets. It only works after the user clicks inside the widget (plain conversational text only; slash commands are rejected), so never call it automatically.",
+      "Show an interactive, self-contained HTML or SVG widget to the user on their current surface. Inline all required code and data. Widgets inherit the host theme via CSS variables: --surface, --card, --elevated, --text, --text-strong, --muted, --border, --border-strong, --accent, --accent-fg, --ok, --warn, --danger, --info (plus --accent-subtle/--ok-subtle/--warn-subtle/--danger-subtle/--info-subtle tints), --radius, --font-body, --font-mono. Color everything with these variables — never hardcode hex colors or backgrounds, and do not define your own color palette or new :root color variables, so the widget matches every theme in light and dark mode. Bare button, input, select, textarea, table, and code elements are pre-styled; helper classes: .card, .badge (.ok/.warn/.danger/.info), .metric, .muted, .row, button.primary. Keep the page background transparent and reserve the accent color for at most one primary action. In web chat, a global sendPrompt(text) function submits text to the chat as if the user typed it — wire it to buttons or controls and append a ↗ to their labels. It only works after the user clicks inside the widget (plain conversational text only; slash commands are rejected), so never call it automatically.",
     parameters: ShowWidgetToolSchema,
     requiredClientCaps: SHOW_WIDGET_REQUIRED_CLIENT_CAPS,
     execute: async (_toolCallId, args) => {

@@ -8,6 +8,7 @@ import {
   createShowWidgetTool,
   WIDGET_CODE_MAX_CHARS,
   WIDGET_MAX_PER_SCOPE,
+  WIDGET_THEME_TOKENS,
 } from "./widget-tool.js";
 
 const tempDirs: string[] = [];
@@ -97,6 +98,8 @@ describe("show_widget", () => {
       `Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:;`,
     );
     expect(html).toContain("<title>&lt;Status&gt;</title>");
+    expect(html).toContain("--accent:#bd4531");
+    expect(html).toContain("--accent:#ff5c5c");
     expect(html).toContain('<body class="svg-widget"><script>');
     expect(html).toContain('</script><SvG viewBox="0 0 10 10">');
     // The embedding chat fits the iframe to the reported content height.
@@ -127,6 +130,27 @@ describe("show_widget", () => {
     // The prompt bridge must precede widget code so inline handlers can
     // reference sendPrompt() while the widget's own scripts run.
     expect(html.indexOf("window.sendPrompt")).toBeLessThan(html.indexOf("<section>"));
+    expect(html).toContain("openclaw:widget-theme");
+    expect(html.indexOf("openclaw:widget-theme")).toBeLessThan(html.indexOf("<section>"));
+    expect(WIDGET_THEME_TOKENS).toEqual([
+      "surface",
+      "card",
+      "elevated",
+      "text",
+      "text-strong",
+      "muted",
+      "border",
+      "border-strong",
+      "accent",
+      "accent-fg",
+      "ok",
+      "warn",
+      "danger",
+      "info",
+      "radius",
+      "font-body",
+      "font-mono",
+    ]);
     // Prompts flow over a channel the bridge creates and offers to the chat at
     // parse time, never directly to window.parent; the send endpoint stays
     // private to the bridge closure and requires transient user activation.
